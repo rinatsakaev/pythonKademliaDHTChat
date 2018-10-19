@@ -12,10 +12,7 @@ class Node:
         self.id = sha1(username.encode("utf-8"))
         self.ip = ip
         self.port = 9090
-        self.routing_table = [
-                              [("id0","ip0"),("id1","ip1"),("id2","ip2")],
-                              [("id3","ip3")]
-                              ]
+        self.routing_table = []
         self._server_socket = socket.socket()
         self._open_server_connection()
         self._client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -37,7 +34,7 @@ class Node:
 
         for node in found_nodes:
             bucket = self.routing_table[node.id ^ self.id]
-            if not any(tup[0] == node.id for tup in bucket):
+            if len(bucket) == 0 or not any(tup[0] == node.id for tup in bucket):
                 bucket.append((node.id, node.ip))
 
             if node["id"] == node_id:
@@ -51,7 +48,7 @@ class Node:
         if len(self.routing_table) == 0:
             raise Exception("Routing table is empty, node id {0}", self.id)
         for bucket in self.routing_table:
-            sorted_bucket = sorted(bucket, key=lambda x: x ^ node_id, reverse=True)
+            sorted_bucket = sorted(bucket, key=lambda x: self.xor(x[0], node_id), reverse=True)
             closest_nodes += sorted_bucket
             total_count += len(sorted_bucket)
             if total_count >= k:
@@ -95,3 +92,6 @@ class Node:
                 except OSError:
                     print(f"Cant connect to node id {node[0]}")
 
+    def xor(self, a: str, b: str):
+        raw = bytes(ord(x) ^ ord(y) for x, y in zip(a, b))
+        return int.from_bytes(raw, byteorder="big")
