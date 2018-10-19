@@ -12,7 +12,7 @@ class Node:
         self.id = sha1(username.encode("utf-8"))
         self.ip = ip
         self.port = 9090
-        self.routing_table = []
+        self.routing_table = [("some_id", "some_ip")]
         self._server_socket = socket.socket()
         self._open_server_connection()
         self._client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -63,7 +63,8 @@ class Node:
             print(f"Client connected, ip {address}\r\n")
             data = conn.recv(1024).decode(encoding='utf-8')
             cmd, payload = data.split(' ')
-            self.handle_command(cmd, payload)
+            response = self.handle_command(cmd, payload)
+            conn.send(response)
 
     def handle_command(self, cmd, payload):
         if cmd == "FIND_NODE":
