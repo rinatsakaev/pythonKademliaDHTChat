@@ -3,13 +3,12 @@ import socket
 import json
 from Message import Message
 
-
 class Node:
     def __init__(self, ip, username):
         self.username = username
-        self.bootstrap_node_id = sha1("root".encode("utf-8"))
+        self.bootstrap_node_id = sha1("root".encode("utf-8")).hexdigest()
         self.bootstrap_node_ip = "bootstrap_ip"
-        self.id = sha1(username.encode("utf-8"))
+        self.id = sha1(username.encode("utf-8")).hexdigest()
         self.ip = ip
         self.port = 9090
         self.routing_table = [("some_id", "some_ip")]
