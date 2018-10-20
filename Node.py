@@ -63,7 +63,7 @@ class Node:
     def _connect_to_neighbour_node(self, node_to_search_id):
         try:
             self._client_socket.connect((self.bootstrap_node_ip, self.port))
-            self._client_socket.send(bytes(f"FIND_NODE {node_id}"))
+            self._client_socket.send(bytes(f"FIND_NODE {node_to_search_id}"))
             res = self._client_socket.recv(1024)
             print(f"Connected to bootstrap node")
             return json.loads(res.decode(encoding='utf-8'))
@@ -75,7 +75,7 @@ class Node:
             for node in sorted_nodes:
                 try:
                     self._client_socket.connect((node["ip"], self.port))
-                    self._client_socket.send(bytes(f"FIND_NODE {node_id}"))
+                    self._client_socket.send(bytes(f"FIND_NODE {node_to_search_id}"))
                     res = self._client_socket.recv(1024)
                     print(f"Connected to node id {node['id']}")
                     return json.loads(res.decode(encoding='utf-8'))
