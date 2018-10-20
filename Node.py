@@ -10,7 +10,7 @@ class Node:
         self.username = username
         self.bootstrap_node_id = sha1("root".encode("utf-8")).digest()[:2]
         self.bootstrap_node_ip = "bootstrap_ip"
-        self.id = sha1(username.encode("utf-8")).digest()[:2]
+        self.id = sha1(username.encode("utf-8")).hexdigest()[:2]
         self.ip = ip
         self.port = 9090
         self.helper = Helper()
@@ -38,7 +38,7 @@ class Node:
         for node in found_nodes:
             self.discover_node_ip(node_id, self._send_find_node(node["ip"], node_id))
 
-    def get_closest_nodes(self, node_id, k):
+    def get_closest_nodes(self, node_id: str, k) -> list:
         total_count = 0
         closest_nodes = []
         if len(self.routing_table) == 0:

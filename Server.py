@@ -25,7 +25,7 @@ class Server(threading.Thread):
             response = self.handle_command(cmd, payload)
             conn.send(response.encode(encoding="utf-8"))
 
-    def handle_command(self, cmd, payload):
+    def handle_command(self, cmd, payload: str):
         if cmd == "FIND_NODE":
             closest_nodes = self.node.get_closest_nodes(payload, 4)
             return json.dumps(closest_nodes)
