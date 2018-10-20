@@ -22,12 +22,13 @@ class Server(threading.Thread):
             print(f"Client connected, ip {address}\r\n")
             data = conn.recv(1024).decode(encoding='utf-8')
             cmd, payload = data.split(' ')
-            response = self.handle_command(cmd, payload)
+            response = self.handle_command(address, cmd, payload)
             conn.send(response.encode(encoding="utf-8"))
 
-    def handle_command(self, cmd, payload: str):
+    def handle_command(self, address, cmd, payload: str):
         if cmd == "FIND_NODE":
             closest_nodes = self.node.get_closest_nodes(payload, 4)
+            self.node._add_node_to_table({"id": payload, "ip": address[0]})
             return json.dumps(closest_nodes)
 
         if cmd == "STORE":

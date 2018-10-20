@@ -29,9 +29,7 @@ class Node:
             found_nodes = self._connect_to_neighbour_node(node_id)
 
         for node in found_nodes:
-            bucket = self.routing_table[self.helper.xor(node["id"], self.id)]
-            if len(bucket) == 0 or not any(item["id"] == node["id"] for item in bucket):
-                bucket.append(node)
+            self._add_node_to_table(node)
 
             if node["id"] == node_id:
                 return node["ip"]
@@ -83,3 +81,7 @@ class Node:
                     print(f"Cant connect to node id {node['id']}")
             return self.get_closest_nodes(node_to_search_id, 4)
 
+    def _add_node_to_table(self, node: dict):
+        bucket = self.routing_table[self.helper.xor(node["id"], self.id)]
+        if len(bucket) == 0 or not any(item["id"] == node["id"] for item in bucket):
+            bucket.append(node)
