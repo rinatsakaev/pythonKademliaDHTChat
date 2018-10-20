@@ -27,8 +27,8 @@ class Server(threading.Thread):
 
     def handle_command(self, address, cmd, payload: str):
         if cmd == "FIND_NODE":
-            closest_nodes = self.node.get_closest_nodes(payload, 4)
             self.node._add_node_to_table({"id": payload, "ip": address[0]})
+            closest_nodes = self.node.get_closest_nodes(payload, 4)
             return json.dumps(closest_nodes)
 
         if cmd == "STORE":

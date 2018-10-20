@@ -4,16 +4,16 @@ class Helper:
     def __init__(self):
         pass
 
-    def init_routingtable(self, id: str):
-        nodes = {"id": sha1("some_id1".encode("utf-8")).hexdigest()[:2],
-                 "ip": "some_ip1"},\
-                {"id": sha1("some_id3".encode("utf-8")).hexdigest()[:2],
-                 "ip": "some_ip2"},\
-                {"id": sha1("some_id2".encode("utf-8")).hexdigest()[:2],
-                 "ip": "some_ip3"}
+    def init_routingtable(self, host_node_id: str):
+        with open("nodes.txt", mode="r") as f:
+            raw_nodes = f.readlines()
+        raw_nodes = [x.strip() for x in raw_nodes]
         res = defaultdict(list)
-        for item in nodes:
-            res[self.xor(item["id"], id)].append(item)
+        for raw_node in raw_nodes:
+            node_id, ip = raw_node.split(':')
+            node = {"id": node_id,
+                    "ip": ip}
+            res[self.xor(node_id, host_node_id)].append(node)
         return res
 
     def xor(self, a: str, b: str):

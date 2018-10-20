@@ -8,9 +8,9 @@ from Message import Message
 class Node:
     def __init__(self, ip, username):
         self.username = username
-        self.bootstrap_node_id = sha1("root".encode("utf-8")).digest()[:2]
+        self.bootstrap_node_id = sha1("root".encode("utf-8")).hexdigest()
         self.bootstrap_node_ip = "bootstrap_ip"
-        self.id = sha1(username.encode("utf-8")).hexdigest()[:2]
+        self.id = sha1(username.encode("utf-8")).hexdigest()
         self.ip = ip
         self.port = 9090
         self.helper = Helper()
@@ -85,3 +85,5 @@ class Node:
         bucket = self.routing_table[self.helper.xor(node["id"], self.id)]
         if len(bucket) == 0 or not any(item["id"] == node["id"] for item in bucket):
             bucket.append(node)
+            with open("nodes.txt", mode="a") as f:
+                f.write(f"{node['id']}:{node['ip']}\r\n")
