@@ -16,6 +16,4 @@ class Helper:
             res[self.xor(node_id, host_node_id)].append(node)
         return res
 
-    def xor(self, a: str, b: str):
-        raw = bytes(ord(x) ^ ord(y) for x, y in zip(a, b))
-        return int.from_bytes(raw, byteorder="big")
+

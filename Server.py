@@ -33,4 +33,5 @@ class Server(threading.Thread):
 
         if cmd == "STORE":
             sender, content = payload
+            self.node._add_node_to_table({"id": sender, "ip": address[0]})
             self.node.messages.append(Message(sender, content))

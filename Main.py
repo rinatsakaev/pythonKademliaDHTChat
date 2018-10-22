@@ -1,5 +1,6 @@
 import sys
 
+from Client import Client
 from Server import Server
 from User import User
 
@@ -16,11 +17,8 @@ class Main:
         self.user = User(self.login, "current_ip")
         self.server_thread = Server(self.user.node)
         self.server_thread.start()
-        self.register_user()
-
-    def register_user(self):
-        self.user.node.discover_node_ip(self.user.node.id, None)
-
+        self.client_thread = Client(self.user.node, 20)
+        self.client_thread.start()
 
 if __name__ == "__main__":
     maincls = Main()
