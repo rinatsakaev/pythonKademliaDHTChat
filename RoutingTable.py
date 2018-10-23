@@ -1,38 +1,54 @@
 from collections import defaultdict, deque
-
-from Node import Node
-
-
-def xor(a: str, b: str):
-    raw = bytes(ord(x) ^ ord(y) for x, y in zip(a, b))
-    return int.from_bytes(raw, byteorder="big")
+import threading
+from Models.Node import Node
+from Helper import xor
 
 
 class RoutingTable:
-    def __init__(self, node: Node, bucket_limit: int):
+    def __init__(self, node: Node, bootstrap_node: Node, bucket_limit: int, file_path: str, lock: threading.Lock):
         self.node_id = node.id
         self.bucket_limit = bucket_limit
+        self.lock = lock
         self._table = defaultdict(deque)
+        self._file_path = file_path
+        self._load_table(bootstrap_node)
 
     def add_node(self, node_to_add: Node):
-        distance = xor(self.node_id, node_to_add.id)
-        bucket = self._table[distance]
-        if len(bucket) < self.bucket_limit:
-            bucket.append(node_to_add)
-        else:
-            if self.ping(bucket[0]):
-                pass
-            bucket.pop()
-            bucket.append(node_to_add)
+        with self.lock:
+            distance = xor(self.node_id, node_to_add.id)
+            bucket = self._table[distance]
+            if len(bucket) < self.bucket_limit:
+                bucket.append(node_to_add)
+            else:
+                if self.ping(bucket[0]):
+                    pass
+                bucket.pop()
+                bucket.append(node_to_add)
+            self._update_file()
 
-    def get_closest_nodes(self, node_to_compare: Node, count) -> list:
+    def get_closest_nodes(self, node_to_search_id: str, count) -> list:
         closest_nodes = []
         for bucket, nodes in self._table.items():
-            sorted_nodes = sorted(nodes, key=lambda x: xor(x.id, node_to_compare.id))
+            sorted_nodes = sorted(nodes, key=lambda x: xor(x.id, node_to_search_id))
             closest_nodes.extend(sorted_nodes)
             if len(closest_nodes) >= count:
                 break
         return closest_nodes[:count]
 
-    def ping(self, node:Node):
+    def _update_file(self):
+        with open("nodes.txt", mode="w") as f:
+            for bucket, nodes in self._table.items():
+                for node in nodes:
+                    f.write(f"{node.id}:{node.ip}:{node.port}\n")
+
+    def ping(self, node: Node):
         return True
+
+    def _load_table(self, bootstrap_node: Node):
+        self.add_node(bootstrap_node)
+        with open(self._file_path, mode="a+") as f:
+            raw_nodes = f.readlines()
+        raw_nodes = [x.strip() for x in raw_nodes]
+        for raw_node in raw_nodes:
+            node_id, ip, port = raw_node.split(':')
+            self.add_node(Node(node_id, ip, int(port)))

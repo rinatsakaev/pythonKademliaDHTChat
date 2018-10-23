@@ -1,37 +1,43 @@
 import threading
 import socket
 import json
-
-from Message import Message
-from Node import Node
+from Helper import socketcontext
+from Models.Message import Message
+from RoutingTable import RoutingTable
+from Models.Node import Node
 
 
 class Server(threading.Thread):
-    def __init__(self, node: Node):
+    def __init__(self, node: Node, routing_table: RoutingTable, lookup_count: int):
         threading.Thread.__init__(self)
-        self.sock = socket.socket()
         self.node = node
-        self.port = 9090
+        self.port = node.port
+        self.routing_table = routing_table
+        self.lookup_count = lookup_count
+        self.messages = []
 
     def run(self):
-        self.sock.bind(('', self.port))
-        self.sock.listen(10)
-        print("Server has started")
-        while True:
-            conn, address = self.sock.accept()
-            print(f"Client connected, ip {address}\r\n")
-            data = conn.recv(1024).decode(encoding='utf-8')
-            cmd, payload = data.split(' ')
-            response = self.handle_command(address, cmd, payload)
-            conn.send(response.encode(encoding="utf-8"))
+        with socketcontext() as sock:
+            sock.bind(('', self.port))
+            sock.listen(10)
+            print("Server has started")
+            while True:
+                conn, sender_address = sock.accept()
+                print(f"Client connected, ip {sender_address}\r\n")
+                data = conn.recv(1024).decode(encoding='utf-8')
+                sender_credentials, cmd, payload = data.split(' ')
+                print(sender_credentials)
+                sender_id, sender_port = sender_credentials.split(':')
+                response = self.handle_command(sender_id, sender_address[0], sender_port, cmd, payload)
+                conn.send(response.encode(encoding="utf-8"))
 
-    def handle_command(self, address, cmd, payload: str):
+    def handle_command(self, sender_id: str, sender_ip, sender_port, cmd, payload: str):
+        sender_node = Node(sender_id, sender_ip, sender_port)
+        self.routing_table.add_node(sender_node)
         if cmd == "FIND_NODE":
-            self.node._add_node_to_table({"id": payload, "ip": address[0]})
-            closest_nodes = self.node.get_closest_nodes(payload, 4)
+            closest_nodes = self.routing_table.get_closest_nodes(payload, self.lookup_count)
             return json.dumps(closest_nodes)
 
         if cmd == "STORE":
-            sender, content = payload
-            self.node._add_node_to_table({"id": sender, "ip": address[0]})
-            self.node.messages.append(Message(sender, content))
+            self.messages.append(Message(sender_node, payload))
+            return json.dumps("ok")
