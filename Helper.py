@@ -1,7 +1,6 @@
 import socket
 from contextlib import contextmanager
 
-
 @contextmanager
 def socketmanager(*args, **kw):
     s = socket.socket(*args, **kw)

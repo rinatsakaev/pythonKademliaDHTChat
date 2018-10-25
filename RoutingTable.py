@@ -1,9 +1,7 @@
-import socket
 from collections import defaultdict, deque
 import threading
 from Models.Node import Node
 from Helper import xor
-from Helper import socketmanager
 
 class RoutingTable:
     def __init__(self, node: Node, bootstrap_node: Node, bucket_limit: int, file_path: str, lock: threading.Lock):
@@ -19,7 +17,7 @@ class RoutingTable:
         with self.lock:
             distance = xor(self.node_id, node_to_add.id)
             bucket = self._table[distance]
-            if not self.if_in_deque(bucket, node_to_add) and len(bucket) < self.bucket_limit:
+            if not RoutingTable.has_node(bucket, node_to_add) and len(bucket) < self.bucket_limit:
                 bucket.append(node_to_add)
             else:
                 if self.ping(bucket[0]):
@@ -58,7 +56,8 @@ class RoutingTable:
             node_id, ip, port = raw_node.split(':')
             self.add_node(Node(node_id, ip, int(port)))
 
-    def if_in_deque(self, queue, node:Node):
+    @staticmethod
+    def has_node(queue, node: Node):
         lst = list(queue)
         for e in lst:
             if e.id == node.id:
