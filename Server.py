@@ -1,5 +1,4 @@
 import threading
-import socket
 import json
 from Helper import socketmanager
 from Models.Message import Message

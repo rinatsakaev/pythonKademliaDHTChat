@@ -3,6 +3,7 @@ import threading
 from Models.Node import Node
 from Helper import xor
 
+
 class RoutingTable:
     def __init__(self, node: Node, bootstrap_node: Node, bucket_limit: int, file_path: str, lock: threading.Lock):
         self.node_id = node.id

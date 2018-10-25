@@ -1,5 +1,4 @@
 from _sha1 import sha1
-
 from Models.Node import Node
 
 
