@@ -3,7 +3,7 @@ from contextlib import contextmanager
 
 
 @contextmanager
-def socketcontext(*args, **kw):
+def socketmanager(*args, **kw):
     s = socket.socket(*args, **kw)
     try:
         yield s

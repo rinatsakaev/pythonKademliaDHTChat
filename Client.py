@@ -4,7 +4,7 @@ import threading
 import base64
 from collections import deque
 
-from Helper import socketcontext
+from Helper import socketmanager
 from Models.Node import Node
 from RoutingTable import RoutingTable
 
@@ -28,16 +28,19 @@ class Client(threading.Thread):
                 self.handle_command(cmd)
 
     def send_store(self, node: Node, data: bytes):
-        with socketcontext(socket.AF_INET, socket.SOCK_STREAM) as s:
+        with socketmanager(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.connect((node.ip, node.port))
             s.send(bytes(f"{self.node.id}:{self.node.port} STORE {base64.encodebytes(data)}", encoding="utf-8"))
 
     def _send_find_node(self, node: Node, node_to_search_id: str) -> list:
-        with socketcontext(socket.AF_INET, socket.SOCK_STREAM) as s:
+        with socketmanager(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.connect((node.ip, node.port))
             s.send(bytes(f"{self.node.id}:{self.node.port} FIND_NODE {node_to_search_id}", encoding="utf-8"))
             res = s.recv(1024)
-            return json.loads(res.decode(encoding='utf-8'))
+            lst = []
+            for str_node in json.loads(res.decode(encoding='utf-8')):
+                lst.append(Node(None, None, None).init_from_dict(str_node))
+            return lst
 
     def find_node(self, node_to_search_id: str, found_nodes: list = None) -> Node:
         if found_nodes is None:
@@ -50,7 +53,7 @@ class Client(threading.Thread):
         for node in found_nodes:
             self.routing_table.add_node(node)
             new_nodes = self._send_find_node(node, node_to_search_id)
-            self.find_node(node_to_search_id, new_nodes)
+            return self.find_node(node_to_search_id, new_nodes)
 
     def handle_command(self, cmd: str):
         node_id, message = cmd.split(':')

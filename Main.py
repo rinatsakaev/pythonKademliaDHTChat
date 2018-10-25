@@ -13,7 +13,7 @@ class Main:
 
     def main(self):
         self.bootstrap_node = Node()
-        self.login = "rinat3"
+        self.login = input("Enter login")
         self.port = 4444
         self.ip = "127.0.0.1"
         self.bucket_limit = 20
