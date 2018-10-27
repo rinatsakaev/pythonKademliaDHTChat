@@ -22,6 +22,7 @@ class Client(threading.Thread):
               f"port: {self.node.port}")
 
     def run(self):
+        self.find_node(self.node.id)
         while True:
             if len(self.command_queue) > 0:
                 cmd = self.command_queue.pop()
@@ -45,13 +46,15 @@ class Client(threading.Thread):
     def find_node(self, node_to_search_id: str, found_nodes: list = None) -> Node:
         if found_nodes is None:
             found_nodes = self.routing_table.get_closest_nodes(node_to_search_id, self.lookup_count)
+        else:
+            for node in found_nodes:
+                self.routing_table.add_node(node)
 
         found_node = [node for node in found_nodes if node.id == node_to_search_id]
         if len(found_node) is not 0:
             return found_node[0]
 
         for node in found_nodes:
-            self.routing_table.add_node(node)
             new_nodes = self._send_find_node(node, node_to_search_id)
             return self.find_node(node_to_search_id, new_nodes)
 

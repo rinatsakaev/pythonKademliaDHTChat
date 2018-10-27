@@ -1,7 +1,7 @@
 from collections import defaultdict, deque
 import threading
 from Models.Node import Node
-from Helper import xor
+from Helper import xor, ping_node
 
 
 class RoutingTable:
@@ -21,7 +21,7 @@ class RoutingTable:
             if not RoutingTable.has_node(bucket, node_to_add) and len(bucket) < self.bucket_limit:
                 bucket.append(node_to_add)
             else:
-                if self.ping(bucket[0]):
+                if distance == 0 or True:  # should be ping_node(bucket[0])
                     return
                 bucket.pop()
                 bucket.append(node_to_add)
@@ -29,8 +29,6 @@ class RoutingTable:
 
     def get_closest_nodes(self, node_to_search_id: str, count) -> list:
         closest_nodes = []
-        if self.node_id == node_to_search_id:
-            return [self.node]
         for bucket, nodes in self._table.items():
             sorted_nodes = sorted(nodes, key=lambda x: xor(x.id, node_to_search_id))
             closest_nodes.extend(sorted_nodes)
@@ -44,12 +42,8 @@ class RoutingTable:
                 for node in nodes:
                     f.write(f"{node.id}:{node.ip}:{node.port}\n")
 
-    def ping(self, node: Node):
-        return True
-
     def _load_table(self, bootstrap_node: Node):
         self.add_node(bootstrap_node)
-        self.add_node(self.node)
         with open(self._file_path, mode="a+") as f:
             raw_nodes = f.readlines()
         raw_nodes = [x.strip() for x in raw_nodes]
