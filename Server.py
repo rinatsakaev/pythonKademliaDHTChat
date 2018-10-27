@@ -1,14 +1,14 @@
-import threading
 import json
 from Helper import socketmanager
 from Models.Message import Message
 from RoutingTable import RoutingTable
 from Models.Node import Node
+from StoppableThread import StoppableThread
 
 
-class Server(threading.Thread):
+class Server(StoppableThread):
     def __init__(self, node: Node, routing_table: RoutingTable, lookup_count: int):
-        threading.Thread.__init__(self)
+        StoppableThread.__init__(self)
         self.node = node
         self.port = node.port
         self.routing_table = routing_table
@@ -21,6 +21,8 @@ class Server(threading.Thread):
             sock.listen(10)
             print("Server has started")
             while True:
+                if self.stopped():
+                    raise NameError("Thread stopped")
                 conn, sender_address = sock.accept()
                 print(f"Client connected, ip {sender_address}\r\n")
                 data = conn.recv(1024).decode(encoding='utf-8')

@@ -3,15 +3,15 @@ import socket
 import threading
 import base64
 from collections import deque
-
+from StoppableThread import StoppableThread
 from Helper import socketmanager
 from Models.Node import Node
 from RoutingTable import RoutingTable
 
 
-class Client(threading.Thread):
+class Client(StoppableThread):
     def __init__(self, node: Node, routing_table: RoutingTable, command_queue: deque, lookup_count: int):
-        threading.Thread.__init__(self)
+        StoppableThread.__init__(self)
         self.node = node
         self.routing_table = routing_table
         self.lookup_count = lookup_count
@@ -24,6 +24,8 @@ class Client(threading.Thread):
     def run(self):
         self.find_node(self.node.id)
         while True:
+            if self.stopped():
+                raise NameError("Thread stopped")
             if len(self.command_queue) > 0:
                 cmd = self.command_queue.pop()
                 self.handle_command(cmd)
