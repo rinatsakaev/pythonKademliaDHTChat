@@ -41,3 +41,6 @@ class Server(threading.Thread):
             self.routing_table.add_node(sender_node)
             self.messages.append(Message(sender_node, payload))
             return "ok"
+
+        if cmd == "PING":
+            return "PONG"
