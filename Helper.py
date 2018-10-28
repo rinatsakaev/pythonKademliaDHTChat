@@ -10,8 +10,9 @@ def socketmanager(*args, **kw):
     try:
         yield s
     except ConnectionError:
-        print(f"Something is wrong with {args[0]}")
+        print(f"Can't connect to node ^")
     finally:
+        s.shutdown(socket.SHUT_RDWR)
         s.close()
 
 

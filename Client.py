@@ -25,18 +25,20 @@ class Client(StoppableThread):
         self.find_node(self.node.id)
         while True:
             if self.stopped():
-                raise NameError("Thread stopped")
+                return
             if len(self.command_queue) > 0:
                 cmd = self.command_queue.pop()
                 self.handle_command(cmd)
 
     def send_store(self, node: Node, data: bytes):
         with socketmanager(socket.AF_INET, socket.SOCK_STREAM) as s:
+            print(f"Connecting to {node.ip}:{node.port} (STORE)")
             s.connect((node.ip, node.port))
             s.send(bytes(f"{self.node.id}:{self.node.port} STORE {base64.encodebytes(data)}", encoding="utf-8"))
 
     def _send_find_node(self, node: Node, node_to_search_id: str) -> list:
         with socketmanager(socket.AF_INET, socket.SOCK_STREAM) as s:
+            print(f"Connecting to {node.ip}:{node.port} (FIND_NODE)")
             s.connect((node.ip, node.port))
             s.send(bytes(f"{self.node.id}:{self.node.port} FIND_NODE {node_to_search_id}", encoding="utf-8"))
             res = s.recv(1024)
