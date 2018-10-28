@@ -3,15 +3,15 @@ import socket
 import threading
 import base64
 from collections import deque
-
+from StoppableThread import StoppableThread
 from Helper import socketmanager
 from Models.Node import Node
 from RoutingTable import RoutingTable
 
 
-class Client(threading.Thread):
+class Client(StoppableThread):
     def __init__(self, node: Node, routing_table: RoutingTable, command_queue: deque, lookup_count: int):
-        threading.Thread.__init__(self)
+        StoppableThread.__init__(self)
         self.node = node
         self.routing_table = routing_table
         self.lookup_count = lookup_count
@@ -24,17 +24,21 @@ class Client(threading.Thread):
     def run(self):
         self.find_node(self.node.id)
         while True:
+            if self.stopped():
+                return
             if len(self.command_queue) > 0:
                 cmd = self.command_queue.pop()
                 self.handle_command(cmd)
 
     def send_store(self, node: Node, data: bytes):
         with socketmanager(socket.AF_INET, socket.SOCK_STREAM) as s:
+            print(f"Connecting to {node.ip}:{node.port} (STORE)")
             s.connect((node.ip, node.port))
             s.send(bytes(f"{self.node.id}:{self.node.port} STORE {base64.encodebytes(data)}", encoding="utf-8"))
 
     def _send_find_node(self, node: Node, node_to_search_id: str) -> list:
         with socketmanager(socket.AF_INET, socket.SOCK_STREAM) as s:
+            print(f"Connecting to {node.ip}:{node.port} (FIND_NODE)")
             s.connect((node.ip, node.port))
             s.send(bytes(f"{self.node.id}:{self.node.port} FIND_NODE {node_to_search_id}", encoding="utf-8"))
             res = s.recv(1024)
