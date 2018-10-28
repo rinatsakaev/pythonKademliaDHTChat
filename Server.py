@@ -1,9 +1,9 @@
 import json
-from Helper import socketmanager
+from Helpers.Helper import socketmanager
 from Models.Message import Message
 from RoutingTable import RoutingTable
 from Models.Node import Node
-from StoppableThread import StoppableThread
+from Helpers.StoppableThread import StoppableThread
 
 
 class Server(StoppableThread):

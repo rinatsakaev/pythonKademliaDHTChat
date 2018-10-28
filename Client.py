@@ -1,10 +1,9 @@
 import json
 import socket
-import threading
 import base64
 from collections import deque
-from StoppableThread import StoppableThread
-from Helper import socketmanager
+from Helpers.StoppableThread import StoppableThread
+from Helpers.Helper import socketmanager
 from Models.Node import Node
 from RoutingTable import RoutingTable
 

@@ -32,4 +32,5 @@ def ping_node(node: Node):
     except ConnectionError:
         return False
     finally:
+        s.shutdown(socket.SHUT_RDWR)
         s.close()
