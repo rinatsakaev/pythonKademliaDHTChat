@@ -21,7 +21,7 @@ class RoutingTable:
             if not RoutingTable.has_node(bucket, node_to_add) and len(bucket) < self.bucket_limit:
                 bucket.append(node_to_add)
             else:
-                if distance == 0 or True:  # should be ping_node(bucket[0])
+                if distance == 0:  # should be or ping_node(bucket[0])
                     return
                 bucket.pop()
                 bucket.append(node_to_add)

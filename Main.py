@@ -18,10 +18,11 @@ class Main:
         self.ip = "127.0.0.1"
         self.bucket_limit = 20
         self.lookup_count = 10
+        self.connections_count = 10
         self.user = User(self.login, self.ip, self.port)
         self.lock = threading.Lock()
         self.routing_table = RoutingTable(self.user.node, self.bucket_limit, "nodes.txt", self.lock)
-        self.server_thread = Server(self.user.node, self.routing_table, self.lookup_count)
+        self.server_thread = Server(self.user.node, self.routing_table, self.lookup_count, self.connections_count)
         self.server_thread.start()
         self.command_queue = deque()
         self.client_thread = Client(self.user.node, self.routing_table, self.command_queue, self.lookup_count)

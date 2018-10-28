@@ -20,6 +20,7 @@ class TestSending(TestCase):
         self.tables = []
         self.bucket_limit = 20
         self.lookup_count = 10
+        self.connections_count = 10
         self.bootstrap_node = Node("d4b90f2dfafc736205a98bf3ae6541431bc77d8e", "127.0.0.1", 5555)
         self._generate_n_sets(5)
 
@@ -44,7 +45,7 @@ class TestSending(TestCase):
     #     self.command_queues[1].append(f"{self.users[2].node.id}:second_msg")
     #     user0_messages = self.server_threads[0].messages
     #     user2_messages = self.server_threads[2].messages
-    #     time.sleep(10)
+    #     time.sleep(60)
     #     self.assertTrue(len(user0_messages) != 0)
     #     self.assertTrue(len(user2_messages) != 0)
     #
@@ -64,7 +65,7 @@ class TestSending(TestCase):
             self.locks.append(threading.Lock())
             self.tables.append(RoutingTable(self.users[i].node, self.bootstrap_node, self.bucket_limit, f"nodes{i}.txt", self.locks[i]))
 
-            self.server_threads.append(Server(self.users[i].node, self.tables[i], self.lookup_count))
+            self.server_threads.append(Server(self.users[i].node, self.tables[i], self.lookup_count, self.connections_count))
             self.server_threads[i].start()
 
             self.command_queues.append(deque())

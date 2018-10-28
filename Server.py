@@ -7,18 +7,19 @@ from StoppableThread import StoppableThread
 
 
 class Server(StoppableThread):
-    def __init__(self, node: Node, routing_table: RoutingTable, lookup_count: int):
+    def __init__(self, node: Node, routing_table: RoutingTable, lookup_count: int, connections_count: int):
         StoppableThread.__init__(self)
         self.node = node
         self.port = node.port
         self.routing_table = routing_table
         self.lookup_count = lookup_count
         self.messages = []
+        self.connections_count = connections_count
 
     def run(self):
         with socketmanager() as sock:
             sock.bind(('', self.port))
-            sock.listen(100)
+            sock.listen(self.connections_count)
             print("Server has started")
             while True:
                 if self.stopped():
