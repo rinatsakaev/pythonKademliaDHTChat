@@ -33,7 +33,7 @@ class Client(StoppableThread):
         with socketmanager(socket.AF_INET, socket.SOCK_STREAM) as s:
             print(f"Connecting to {node.ip}:{node.port} (STORE)")
             s.connect((node.ip, node.port))
-            s.send(bytes(f"{self.node.id}:{self.node.port} STORE {base64.encodebytes(data)}", encoding="utf-8"))
+            s.send(bytes(f"{self.node.id}:{self.node.port} STORE {base64.b64encode(data).decode('utf-8')}", encoding="utf-8"))
 
     def _send_find_node(self, node: Node, node_to_search_id: str) -> list:
         with socketmanager(socket.AF_INET, socket.SOCK_STREAM) as s:

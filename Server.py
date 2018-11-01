@@ -1,4 +1,6 @@
 import json
+from collections import deque
+
 from Helpers.Helper import socketmanager
 from Models.Message import Message
 from RoutingTable import RoutingTable
@@ -7,13 +9,13 @@ from Helpers.StoppableThread import StoppableThread
 
 
 class Server(StoppableThread):
-    def __init__(self, node: Node, routing_table: RoutingTable, lookup_count: int, connections_count: int):
+    def __init__(self, node: Node, routing_table: RoutingTable, message_output_queue: deque, lookup_count: int, connections_count: int):
         StoppableThread.__init__(self)
         self.node = node
         self.port = node.port
         self.routing_table = routing_table
         self.lookup_count = lookup_count
-        self.messages = []
+        self.messages = message_output_queue
         self.connections_count = connections_count
 
     def run(self):
