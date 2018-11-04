@@ -57,7 +57,7 @@ class Main:
         self.client_thread1.start()
 
         while True:
-            self.command_input_queue1.append(f"{self.user.node.id}:new_msg")
+            self.command_input_queue1.append(f"{self.user.node.id} STORE new_msg")
             time.sleep(1)
 
 if __name__ == "__main__":

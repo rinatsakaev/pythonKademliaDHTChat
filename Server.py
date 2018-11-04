@@ -80,16 +80,6 @@ class Server(StoppableThread):
             if recipient.id != message.sender_node.id:
                 send_command(message.sender_node, recipient, "STORE", message.content)
 
-    def _load_subscribers(self):
-        subscribers = []
-        with open(self._subscribers_file, mode="a+") as f:
-            raw_nodes = f.readlines()
-            raw_nodes = [x.strip() for x in raw_nodes]
-            for raw_node in raw_nodes:
-                node_id, ip, port = raw_node.split(':')
-                subscribers.append(Node(node_id, ip, int(port)))
-        return subscribers
-
     def add_subscriber(self, node: Node):
         if not self.has_subscriber(node):
             self.subscribers.append(node)
@@ -99,3 +89,13 @@ class Server(StoppableThread):
         with open(self._subscribers_file, mode="w") as f:
             for subscriber in self.subscribers:
                 f.write(f"{subscriber.id}:{subscriber.ip}:{subscriber.port}\n")
+
+    def _load_subscribers(self):
+        subscribers = []
+        with open(self._subscribers_file, mode="a+") as f:
+            raw_nodes = f.readlines()
+            raw_nodes = [x.strip() for x in raw_nodes]
+            for raw_node in raw_nodes:
+                node_id, ip, port = raw_node.split(':')
+                subscribers.append(Node(node_id, ip, int(port)))
+        return subscribers
