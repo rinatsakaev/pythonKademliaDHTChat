@@ -13,5 +13,6 @@ class EventEmitter(Thread):
     def run(self):
         while True:
             if len(self.msg_queue) is not 0:
-                new_message = self.msg_queue.pop().content
-                self.io.emit('message', {'msg': base64.b64decode(new_message).decode("utf-8")})
+                new_message = self.msg_queue.pop()
+                self.io.emit('message', {'msg': base64.b64decode(new_message.content).decode("utf-8"),
+                                         'sender_id': new_message.sender_node.id})
