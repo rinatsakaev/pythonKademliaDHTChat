@@ -13,6 +13,8 @@
         #msg_box .msg:nth-child(even){
             background-color: lightblue;
         }
+
+
     </style>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"
             integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa"
@@ -24,23 +26,35 @@
             if (data.sender_id == "{{user_hash}}")
                 show_message(data);
         });
+        socket.on('public_message', function(data){
+              if (data.public_node_id == "{{user_hash}}")
+                show_message(data);
+        });
 
         function show_message(data) {
             var date = new Date();
             var date_str = date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds();
             $("#msg_box").append("<div class='msg'>"+date_str + " " + data.sender_id + " : " + data.msg + "</div>")
         }
+
+
     </script>
 </head>
 <body>
 <div class="row">
     <div class="col-md-2" style="padding-left:50px">
+        <form action="http://localhost:12345/subscribe" method="POST" style="width: 100%">
+            <input type="text" name="chatname" placeholder="Введите название публичного чата"
+                   style="display: block; height:50px; width:100%"/>
+             <input type="submit" value="Подписаться" class="btn" style="width: 100%"/>
+        </form>
         {% for contact in contacts %}
-            <div class="row" style="padding:5%">
-                <a href="/dialog/{{ contact }}">{{ contact }}</a>
-            </div>
+        <div class="row" style="padding:5%">
+            <a href="/dialog/{{ contact }}">{{ contact }}</a>
+        </div>
         {% endfor %}
-    </div>да
+    </div>
+
     <div class="col-md-2">
         <div style="width:500px; height:600px; border: 1px solid gray; position: relative">
             <div style="height: 50%; z-index:-1; word-break: break-all; overflow-y: scroll" id="msg_box">
