@@ -61,13 +61,16 @@ class Server(StoppableThread):
         if cmd == "PING":
             return "PONG"
 
-        if cmd == "SUBSCRIBE":
-            self.routing_table.add_node(sender_node)
-            self.add_subscriber(sender_node)
-            return "ok"
-        if cmd == "UNSUBSCRIBE":
-            self.subscribers.remove(sender_node)
-            self._update_subscribers_file()
+        if self.node.is_public:
+            if cmd == "SUBSCRIBE":
+                self.routing_table.add_node(sender_node)
+                self.add_subscriber(sender_node)
+                return "ok"
+
+            if cmd == "UNSUBSCRIBE":
+                self.subscribers.remove(sender_node)
+                self._update_subscribers_file()
+                return "ok"
 
     def has_subscriber(self, node: Node):
         for e in self.subscribers:
