@@ -1,3 +1,4 @@
+import base64
 import socket
 from contextlib import contextmanager
 
@@ -12,7 +13,6 @@ def socketmanager(*args, **kw):
     except ConnectionError:
         print(f"Can't connect to node ^")
     finally:
-        s.shutdown(socket.SHUT_RDWR)
         s.close()
 
 
@@ -32,5 +32,12 @@ def ping_node(node: Node):
     except ConnectionError:
         return False
     finally:
-        s.shutdown(socket.SHUT_RDWR)
         s.close()
+
+
+def send_command(from_node: Node, to_node: Node, command: str, data: str):
+    with socketmanager(socket.AF_INET, socket.SOCK_STREAM) as s:
+        print(f"Connecting to {to_node.ip}:{to_node.port} ({command})")
+        s.connect((to_node.ip, to_node.port))
+        s.send(bytes(f"{from_node.id}:{from_node.port} {command} {data}",
+                     encoding="utf-8"))

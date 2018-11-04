@@ -1,7 +1,7 @@
 from collections import defaultdict, deque
 import threading
 from Models.Node import Node
-from Helper import xor, ping_node
+from Helpers.Helper import xor, ping_node
 
 
 class RoutingTable:
@@ -21,7 +21,7 @@ class RoutingTable:
             if not RoutingTable.has_node(bucket, node_to_add) and len(bucket) < self.bucket_limit:
                 bucket.append(node_to_add)
             else:
-                if distance == 0:  # should be or ping_node(bucket[0])
+                if len(bucket) < self.bucket_limit or distance == 0 or ping_node(bucket[0]):
                     return
                 bucket.pop()
                 bucket.append(node_to_add)

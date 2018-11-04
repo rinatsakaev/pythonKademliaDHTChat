@@ -2,7 +2,7 @@ import threading
 import time
 from collections import deque
 from unittest import TestCase
-
+from Helpers import Helper
 from Client import Client
 from Models.Node import Node
 from Models.User import User
@@ -13,6 +13,7 @@ from Server import Server
 class TestSending(TestCase):
     def setUp(self):
         self.command_queues = []
+        self.output_queues = []
         self.client_threads = []
         self.server_threads = []
         self.locks = []
@@ -20,18 +21,37 @@ class TestSending(TestCase):
         self.tables = []
         self.bucket_limit = 20
         self.lookup_count = 10
-        self.connections_count = 10
-        self.bootstrap_node = Node("d4b90f2dfafc736205a98bf3ae6541431bc77d8e", "127.0.0.1", 5555)
-        self._generate_n_sets(5)
+        self.connections_count = 20
+        self.bootstrap_node = Node("bootstrap_node", "127.0.0.1", 5555)
+        self.private_nodes_count = 5
+        self.public_nodes_count = 2
+        self._generate_private_nodes(self.private_nodes_count)
+        self._generate_public_nodes(self.public_nodes_count)
 
     def tearDown(self):
         self._stop_threads()
 
-    def test_user2_to_user1(self):
-        self.command_queues[1].append(f"{self.users[0].node.id}:somemsg")
-        user1_messages = self.server_threads[0].messages
-        time.sleep(5)
-        self.assertTrue(len(user1_messages) != 0)
+    def test_group_chats(self):
+        public_user = self.users[self.private_nodes_count + 1]
+        for command_queue in self.command_queues[:self.private_nodes_count]:
+            command_queue.append(f"{public_user.node.id} SUBSCRIBE 0")
+
+        time.sleep(10)
+        self.command_queues[0].append(f"{public_user.node.id} STORE some_msg")
+        time.sleep(10)
+        for thread in self.server_threads[1:self.private_nodes_count]:
+            self.assertTrue(len(thread.messages) != 0)
+
+    # def test_ping_node(self):
+    #     self.assertTrue(Helper.ping_node(self.users[1].node))
+    #     unregistered_user = User(f"login{self.sets_count+1}", "127.0.0.1", 5555+self.sets_count+1)
+    #     self.assertFalse(Helper.ping_node(unregistered_user.node))
+
+    # def test_user2_to_user1(self):
+    #     self.command_queues[1].append(f"{self.users[0].node.id}:somemsg")
+    #     user1_messages = self.server_threads[0].messages
+    #     time.sleep(5)
+    #     self.assertTrue(len(user1_messages) != 0)
 
     # def test_2_messages_user2_to_user1(self):
     #     self.command_queues[1].append(f"{self.users[0].node.id}:first_msg")
@@ -45,7 +65,7 @@ class TestSending(TestCase):
     #     self.command_queues[1].append(f"{self.users[2].node.id}:second_msg")
     #     user0_messages = self.server_threads[0].messages
     #     user2_messages = self.server_threads[2].messages
-    #     time.sleep(60)
+    #     time.sleep(10)
     #     self.assertTrue(len(user0_messages) != 0)
     #     self.assertTrue(len(user2_messages) != 0)
     #
@@ -58,18 +78,38 @@ class TestSending(TestCase):
     #     self.assertTrue(len(user0_messages) != 0)
     #     self.assertTrue(len(user2_messages) != 0)
 
-    def _generate_n_sets(self, n):
+    def _generate_private_nodes(self, n):
         default_port = 5555
         for i in range(0, n):
-            self.users.append(User(f"login{i}", "127.0.0.1", default_port + i))
+            self.users.append(User(f"private{i}", "127.0.0.1", default_port + i))
             self.locks.append(threading.Lock())
             self.tables.append(RoutingTable(self.users[i].node, self.bootstrap_node, self.bucket_limit, f"nodes{i}.txt", self.locks[i]))
 
-            self.server_threads.append(Server(self.users[i].node, self.tables[i], self.lookup_count, self.connections_count))
+            self.output_queues.append(deque())
+            self.server_threads.append(Server(self.users[i].node, self.tables[i], self.output_queues[i], self.lookup_count, self.connections_count))
             self.server_threads[i].start()
 
             self.command_queues.append(deque())
             self.client_threads.append(Client(self.users[i].node, self.tables[i], self.command_queues[i], self.lookup_count))
+            self.client_threads[i].start()
+
+    def _generate_public_nodes(self, n):
+        default_port = 5555 + self.private_nodes_count + 1
+        for i in range(self.private_nodes_count, self.private_nodes_count+n):
+            self.users.append(User(f"public{i}", "127.0.0.1", default_port + i, True))
+            self.locks.append(threading.Lock())
+            self.tables.append(RoutingTable(self.users[i].node, self.bootstrap_node, self.bucket_limit, f"nodes{i}.txt",
+                                            self.locks[i]))
+
+            self.output_queues.append(deque())
+            self.server_threads.append(
+                Server(self.users[i].node, self.tables[i], self.output_queues[i], self.lookup_count,
+                       self.connections_count))
+            self.server_threads[i].start()
+
+            self.command_queues.append(deque())
+            self.client_threads.append(
+                Client(self.users[i].node, self.tables[i], self.command_queues[i], self.lookup_count))
             self.client_threads[i].start()
 
     def _stop_threads(self):
