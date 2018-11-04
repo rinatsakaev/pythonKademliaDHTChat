@@ -12,7 +12,6 @@ def socketmanager(*args, **kw):
     except ConnectionError:
         print(f"Can't connect to node ^")
     finally:
-        s.shutdown(socket.SHUT_RDWR)
         s.close()
 
 
@@ -32,5 +31,4 @@ def ping_node(node: Node):
     except ConnectionError:
         return False
     finally:
-        s.shutdown(socket.SHUT_RDWR)
         s.close()

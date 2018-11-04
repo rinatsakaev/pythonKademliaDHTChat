@@ -2,7 +2,7 @@ import threading
 import time
 from collections import deque
 from unittest import TestCase
-
+from Helpers import Helper
 from Client import Client
 from Models.Node import Node
 from Models.User import User
@@ -13,6 +13,7 @@ from Server import Server
 class TestSending(TestCase):
     def setUp(self):
         self.command_queues = []
+        self.output_queues = []
         self.client_threads = []
         self.server_threads = []
         self.locks = []
@@ -20,18 +21,24 @@ class TestSending(TestCase):
         self.tables = []
         self.bucket_limit = 20
         self.lookup_count = 10
-        self.connections_count = 10
+        self.connections_count = 2
         self.bootstrap_node = Node("d4b90f2dfafc736205a98bf3ae6541431bc77d8e", "127.0.0.1", 5555)
-        self._generate_n_sets(5)
+        self.sets_count = 20
+        self._generate_n_sets(self.sets_count)
 
     def tearDown(self):
         self._stop_threads()
 
-    def test_user2_to_user1(self):
-        self.command_queues[1].append(f"{self.users[0].node.id}:somemsg")
-        user1_messages = self.server_threads[0].messages
-        time.sleep(5)
-        self.assertTrue(len(user1_messages) != 0)
+    # def test_ping_node(self):
+    #     self.assertTrue(Helper.ping_node(self.users[1].node))
+    #     unregistered_user = User(f"login{self.sets_count+1}", "127.0.0.1", 5555+self.sets_count+1)
+    #     self.assertFalse(Helper.ping_node(unregistered_user.node))
+
+    # def test_user2_to_user1(self):
+    #     self.command_queues[1].append(f"{self.users[0].node.id}:somemsg")
+    #     user1_messages = self.server_threads[0].messages
+    #     time.sleep(5)
+    #     self.assertTrue(len(user1_messages) != 0)
 
     # def test_2_messages_user2_to_user1(self):
     #     self.command_queues[1].append(f"{self.users[0].node.id}:first_msg")
@@ -45,7 +52,7 @@ class TestSending(TestCase):
     #     self.command_queues[1].append(f"{self.users[2].node.id}:second_msg")
     #     user0_messages = self.server_threads[0].messages
     #     user2_messages = self.server_threads[2].messages
-    #     time.sleep(60)
+    #     time.sleep(10)
     #     self.assertTrue(len(user0_messages) != 0)
     #     self.assertTrue(len(user2_messages) != 0)
     #
@@ -65,7 +72,8 @@ class TestSending(TestCase):
             self.locks.append(threading.Lock())
             self.tables.append(RoutingTable(self.users[i].node, self.bootstrap_node, self.bucket_limit, f"nodes{i}.txt", self.locks[i]))
 
-            self.server_threads.append(Server(self.users[i].node, self.tables[i], self.lookup_count, self.connections_count))
+            self.output_queues.append(deque())
+            self.server_threads.append(Server(self.users[i].node, self.tables[i], self.output_queues[i], self.lookup_count, self.connections_count))
             self.server_threads[i].start()
 
             self.command_queues.append(deque())
