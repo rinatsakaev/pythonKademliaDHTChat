@@ -1,4 +1,5 @@
 import threading
+from _sha1 import sha1
 from collections import deque
 
 from ChatController import create_chat_controller
@@ -24,4 +25,4 @@ class FlaskThread(threading.Thread):
     def get_contacts_from_file(self, path):
         with open(path, mode="r") as f:
             lines = f.readlines()
-            return lines
+            return {sha1(bytes(username.rstrip(), encoding='utf-8')).hexdigest() : username.rstrip() for username in lines}

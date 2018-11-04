@@ -81,7 +81,7 @@ class Server(StoppableThread):
     def send_broadcast(self, message: Message):
         for recipient in self.subscribers:
             if recipient.id != message.sender_node.id:
-                send_command(message.sender_node, recipient, "STORE", message.content)
+                send_command(self.node, recipient, "STORE", f"<{message.sender_node.id}>{message.content}")
 
     def add_subscriber(self, node: Node):
         if not self.has_subscriber(node):

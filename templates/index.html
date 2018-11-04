@@ -34,7 +34,13 @@
         function show_message(data) {
             var date = new Date();
             var date_str = date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds();
-            $("#msg_box").append("<div class='msg'>"+date_str + " " + data.sender_id + " : " + data.msg + "</div>")
+            var contacts_json = {{ contacts|tojson|safe }};
+            var username = "";
+            if (contacts_json[data.sender_id] !== undefined)
+                username = contacts_json[data.sender_id];
+            else
+                username = data.sender_id;
+            $("#msg_box").append("<div class='msg'>"+date_str + " " + username + " : " + data.msg + "</div>")
         }
 
 
@@ -48,7 +54,7 @@
                    style="display: block; height:50px; width:100%"/>
              <input type="submit" value="Подписаться" class="btn" style="width: 100%"/>
         </form>
-        {% for contact in contacts %}
+        {% for hash, contact in contacts.items() %}
         <div class="row" style="padding:5%">
             <a href="/dialog/{{ contact }}">{{ contact }}</a>
         </div>
