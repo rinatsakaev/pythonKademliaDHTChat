@@ -1,6 +1,7 @@
+import base64
 import json
 import socket
-import base64
+from Helpers.Helper import  send_command
 from collections import deque
 from Helpers.StoppableThread import StoppableThread
 from Helpers.Helper import socketmanager
@@ -21,19 +22,15 @@ class Client(StoppableThread):
               f"port: {self.node.port}")
 
     def run(self):
-        self.find_node(self.node.id)
+        discovered_node = self.find_node(self.node.id)
+        if discovered_node.ip != self.node.ip or discovered_node.port != self.node.port:
+            raise Exception("This id is already taken")
         while True:
             if self.stopped():
                 return
             if len(self.command_queue) > 0:
                 cmd = self.command_queue.pop()
                 self.handle_command(cmd)
-
-    def send_store(self, node: Node, data: bytes):
-        with socketmanager(socket.AF_INET, socket.SOCK_STREAM) as s:
-            print(f"Connecting to {node.ip}:{node.port} (STORE)")
-            s.connect((node.ip, node.port))
-            s.send(bytes(f"{self.node.id}:{self.node.port} STORE {base64.b64encode(data).decode('utf-8')}", encoding="utf-8"))
 
     def _send_find_node(self, node: Node, node_to_search_id: str) -> list:
         with socketmanager(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -62,6 +59,7 @@ class Client(StoppableThread):
             return self.find_node(node_to_search_id, new_nodes)
 
     def handle_command(self, cmd: str):
-        node_id, message = cmd.split(':')
+        node_id, command, content = cmd.split(' ')
         node = self.find_node(node_id)
-        self.send_store(node, message.encode("utf-8"))
+        b64_content = base64.b64encode(bytes(content, encoding="utf-8"))
+        send_command(self.node, node, command, b64_content.decode("utf-8"))

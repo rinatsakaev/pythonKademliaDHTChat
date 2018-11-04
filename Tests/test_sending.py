@@ -21,13 +21,33 @@ class TestSending(TestCase):
         self.tables = []
         self.bucket_limit = 20
         self.lookup_count = 10
-        self.connections_count = 2
-        self.bootstrap_node = Node("d4b90f2dfafc736205a98bf3ae6541431bc77d8e", "127.0.0.1", 5555)
-        self.sets_count = 20
+        self.connections_count = 10
+        self.bootstrap_node = Node("bootstrap_node", "127.0.0.1", 5555)
+        self.sets_count = 5
         self._generate_n_sets(self.sets_count)
 
     def tearDown(self):
         self._stop_threads()
+
+    def test_group_chats(self):
+        public_user = User("public_node", "127.0.0.1", 5555+self.sets_count, True)
+        lock = threading.Lock()
+        public_table = RoutingTable(public_user.node, self.bootstrap_node, self.bucket_limit, f"public_node.txt", lock)
+        public_output_queue = deque()
+        public_server_thread = Server(public_user.node, public_table, public_output_queue, self.lookup_count, self.connections_count)
+        public_server_thread.start()
+        public_command_queue = deque()
+        public_client_thread = Client(public_user.node, public_table, public_command_queue, self.lookup_count)
+        public_client_thread.start()
+
+        for command_queue in self.command_queues:
+            command_queue.append(f"{public_user.node.id} SUBSCRIBE 0")
+
+        time.sleep(10)
+        self.command_queues[0].append(f"{public_user.node.id} STORE some_msg")
+        time.sleep(10)
+        for thread in self.server_threads[1:]:
+            self.assertTrue(len(thread.messages) != 0)
 
     # def test_ping_node(self):
     #     self.assertTrue(Helper.ping_node(self.users[1].node))
