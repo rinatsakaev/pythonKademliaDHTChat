@@ -4,6 +4,7 @@ from collections import deque
 from unittest import TestCase
 from Helpers import Helper
 from Client import Client
+from Helpers.NodeExceptions import NodeNotFoundException
 from Models.Node import Node
 from Models.User import User
 from RoutingTable import RoutingTable
@@ -20,7 +21,8 @@ class TestSending(TestCase):
         self.users = []
         self.tables = []
         self.bucket_limit = 20
-        self.lookup_count = 10
+        self.k = 10
+        self.alpha = 3
         self.connections_count = 20
         self.bootstrap_node = Node("bootstrap_node", "127.0.0.1", 5555)
         self.private_nodes_count = 5
@@ -31,22 +33,26 @@ class TestSending(TestCase):
     def tearDown(self):
         self._stop_threads()
 
-    def test_group_chats(self):
-        public_user = self.users[self.private_nodes_count + 1]
-        for command_queue in self.command_queues[:self.private_nodes_count]:
-            command_queue.append(f"{public_user.node.id} SUBSCRIBE 0")
-
-        time.sleep(10)
-        self.command_queues[0].append(f"{public_user.node.id} STORE some_msg")
-        time.sleep(10)
-        for thread in self.server_threads[1:self.private_nodes_count]:
-            self.assertTrue(len(thread.messages) != 0)
-
-    def test_ping_node(self):
-        self.assertTrue(Helper.ping_node(self.users[1].node))
-        unregistered_user = User(f"login{self.private_nodes_count+1}", "127.0.0.1", 5555 + self.private_nodes_count + 1)
-        self.assertFalse(Helper.ping_node(unregistered_user.node))
+    # def test_group_chats(self):
+    #     public_user = self.users[self.private_nodes_count + 1]
+    #     for command_queue in self.command_queues[:self.private_nodes_count]:
+    #         command_queue.append(f"{public_user.node.id} SUBSCRIBE 0")
     #
+    #     time.sleep(10)
+    #     self.command_queues[0].append(f"{public_user.node.id} STORE some_msg")
+    #     time.sleep(10)
+    #     for thread in self.server_threads[1:self.private_nodes_count]:
+    #         self.assertTrue(len(thread.messages) != 0)
+
+    # def test_ping_node(self):
+    #     self.assertTrue(Helper.ping_node(self.users[1].node))
+    #     unregistered_user = User(f"login{self.private_nodes_count+1}", "127.0.0.1", 5555 + self.private_nodes_count + 1)
+    #     self.assertFalse(Helper.ping_node(unregistered_user.node))
+
+    def test_node_not_found(self):
+        self.command_queues[1].append(f"some_not_existing_id STORE some_msg")
+        self.assertRaises(NodeNotFoundException)
+
     # def test_user2_to_user1(self):
     #     self.command_queues[1].append(f"{self.users[0].node.id} STORE somemsg")
     #     user1_messages = self.server_threads[0].messages
@@ -88,13 +94,13 @@ class TestSending(TestCase):
 
             self.output_queues.append(deque())
             self.server_threads.append(
-                Server(self.users[i].node, self.tables[i], self.output_queues[i], self.lookup_count,
+                Server(self.users[i].node, self.tables[i], self.output_queues[i], self.k,
                        self.connections_count))
             self.server_threads[i].start()
 
             self.command_queues.append(deque())
             self.client_threads.append(
-                Client(self.users[i].node, self.tables[i], self.command_queues[i], self.lookup_count))
+                Client(self.users[i].node, self.tables[i], self.command_queues[i], self.k, self.alpha))
             self.client_threads[i].start()
 
     def _generate_public_nodes(self, n):
@@ -107,13 +113,13 @@ class TestSending(TestCase):
 
             self.output_queues.append(deque())
             self.server_threads.append(
-                Server(self.users[i].node, self.tables[i], self.output_queues[i], self.lookup_count,
+                Server(self.users[i].node, self.tables[i], self.output_queues[i], self.k,
                        self.connections_count))
             self.server_threads[i].start()
 
             self.command_queues.append(deque())
             self.client_threads.append(
-                Client(self.users[i].node, self.tables[i], self.command_queues[i], self.lookup_count))
+                Client(self.users[i].node, self.tables[i], self.command_queues[i], self.k, self.alpha))
             self.client_threads[i].start()
 
     def _stop_threads(self):

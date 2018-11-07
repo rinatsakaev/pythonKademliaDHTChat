@@ -1,21 +1,25 @@
 import base64
 import json
 import socket
-from Helpers.Helper import  send_command
+from Helpers.Helper import send_command
 from collections import deque
 from Helpers.StoppableThread import StoppableThread
 from Helpers.Helper import socketmanager
 from Models.Node import Node
 from RoutingTable import RoutingTable
-
+from Helpers.Helper import xor
+from Helpers.NodeExceptions import NodeNotFoundException
 
 class Client(StoppableThread):
-    def __init__(self, node: Node, routing_table: RoutingTable, command_queue: deque, lookup_count: int):
+    def __init__(self, node: Node, routing_table: RoutingTable, command_queue: deque, k: int, alpha: int):
         StoppableThread.__init__(self)
         self.node = node
         self.routing_table = routing_table
-        self.lookup_count = lookup_count
+        self.k = k
+        self.alpha = alpha
         self.command_queue = command_queue
+        self.queried_nodes = []
+        self.min_distance = None
         print(f"Client has started.\n"
               f"id: {self.node.id}\n"
               f"ip: {self.node.ip}\n"
@@ -44,19 +48,50 @@ class Client(StoppableThread):
             return lst
 
     def find_node(self, node_to_search_id: str, found_nodes: list = None) -> Node:
+
         if found_nodes is None:
-            found_nodes = self.routing_table.get_closest_nodes(node_to_search_id, self.lookup_count)
+            found_nodes = self.routing_table.get_closest_nodes(node_to_search_id, self.alpha)
         else:
             for node in found_nodes:
                 self.routing_table.add_node(node)
 
         found_node = [node for node in found_nodes if node.id == node_to_search_id]
         if len(found_node) is not 0:
+            self.queried_nodes = []
             return found_node[0]
 
-        for node in found_nodes:
+        good_nodes = self.get_closest_found_nodes(found_nodes, node_to_search_id)
+
+        if len(good_nodes) == 0:
+            nodes_to_request = self.get_not_requested_nodes(found_nodes)
+            if len(nodes_to_request) == 0:
+                self.queried_nodes = []
+                raise NodeNotFoundException(f"Can't find node with id {node_to_search_id}")
+
+            return self.send_find_requests(nodes_to_request[:self.k], node_to_search_id)
+
+        return self.send_find_requests(good_nodes[:self.alpha], node_to_search_id)
+
+    def send_find_requests(self, nodes, node_to_search_id):
+        for node in nodes:
             new_nodes = self._send_find_node(node, node_to_search_id)
+            self.queried_nodes.append(node)
             return self.find_node(node_to_search_id, new_nodes)
+
+    def get_closest_found_nodes(self, found_nodes: list, node_to_search_id):
+        good_nodes = []
+        for node in found_nodes:
+            if self.min_distance is None or xor(node.id, node_to_search_id) < self.min_distance:
+                self.min_distance = xor(node.id, node_to_search_id)
+                good_nodes.append(node)
+        return good_nodes
+
+    def get_not_requested_nodes(self, nodes):
+        n = []
+        for node in nodes:
+            if len([x for x in self.queried_nodes if x.id == node.id]) == 0:
+                n.append(node)
+        return n
 
     def handle_command(self, cmd: str):
         node_id, command, content = cmd.split(' ')
