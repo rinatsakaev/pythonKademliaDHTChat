@@ -58,6 +58,7 @@ class Client(StoppableThread):
         found_node = [node for node in found_nodes if node.id == node_to_search_id]
         if len(found_node) is not 0:
             self.queried_nodes = []
+            self.min_distance = None
             return found_node[0]
 
         good_nodes = self.get_closest_found_nodes(found_nodes, node_to_search_id)
@@ -66,6 +67,7 @@ class Client(StoppableThread):
             nodes_to_request = self.get_not_requested_nodes(found_nodes)
             if len(nodes_to_request) == 0:
                 self.queried_nodes = []
+                self.min_distance = None
                 raise NodeNotFoundException(f"Can't find node with id {node_to_search_id}")
 
             return self.send_find_requests(nodes_to_request[:self.k], node_to_search_id)
