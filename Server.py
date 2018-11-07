@@ -11,13 +11,13 @@ from Helpers.StoppableThread import StoppableThread
 
 
 class Server(StoppableThread):
-    def __init__(self, node: Node, routing_table: RoutingTable, message_output_queue: deque, lookup_count: int,
+    def __init__(self, node: Node, routing_table: RoutingTable, message_output_queue: deque, k: int,
                  connections_count: int):
         StoppableThread.__init__(self)
         self.node = node
         self.port = node.port
         self.routing_table = routing_table
-        self.lookup_count = lookup_count
+        self.k = k
         self.messages = message_output_queue
         self.connections_count = connections_count
         self._subscribers_file = "subscribers.txt"
@@ -30,7 +30,7 @@ class Server(StoppableThread):
             print("Server has started")
             while True:
                 if self.stopped():
-                    return
+                    break
                 conn, sender_address = sock.accept()
                 print(f"Client connected, ip {sender_address}\r\n")
                 data = conn.recv(1024).decode(encoding='utf-8')
@@ -40,12 +40,13 @@ class Server(StoppableThread):
                 response = self.handle_command(sender_id, sender_address[0], int(sender_port), cmd, payload)
                 conn.send(response.encode(encoding="utf-8"))
                 conn.close()
+            return
 
     def handle_command(self, sender_id: str, sender_ip, sender_port, cmd, payload: str):
         sender_node = Node(sender_id, sender_ip, sender_port)
         if cmd == "FIND_NODE":
             self.routing_table.add_node(sender_node)
-            closest_nodes = self.routing_table.get_closest_nodes(payload, self.lookup_count)
+            closest_nodes = self.routing_table.get_closest_nodes(payload, self.k)
             return json.dumps(closest_nodes, default=lambda x: x.__dict__)
 
         if cmd == "STORE":
