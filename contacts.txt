@@ -2,3 +2,6 @@ test1
 test2
 test3
 test4
+private1
+private2
+private0

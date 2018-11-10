@@ -20,7 +20,8 @@ class Main:
         self.users = []
         self.tables = []
         self.bucket_limit = 20
-        self.lookup_count = 10
+        self.k = 10
+        self.alpha = 3
         self.connections_count = 20
         self.bootstrap_node = Node("bootstrap_node", "127.0.0.1", 5555)
         self.private_nodes_count = 4
@@ -33,18 +34,18 @@ class Main:
         self.port = 4444
         self.ip = "127.0.0.1"
         self.bucket_limit = 20
-        self.lookup_count = 10
+        self.k = 10
         self.connections_count = 10
         self.user = User(self.login, self.ip, self.port)
         self.lock = threading.Lock()
         self.routing_table = RoutingTable(self.user.node, self.bootstrap_node, self.bucket_limit, "nodes.txt", self.lock)
         self.messages_output_queue = deque()
-        self.server_thread = Server(self.user.node, self.routing_table, self.messages_output_queue, self.lookup_count, self.connections_count)
+        self.server_thread = Server(self.user.node, self.routing_table, self.messages_output_queue, self.k, self.connections_count)
         self.server_thread.start()
         self.command_input_queue = deque()
         self.flask_thread = FlaskThread(self.command_input_queue, self.messages_output_queue)
         self.flask_thread.start()
-        self.client_thread = Client(self.user.node, self.routing_table, self.command_input_queue, self.lookup_count)
+        self.client_thread = Client(self.user.node, self.routing_table, self.command_input_queue, self.k, self.alpha)
         self.client_thread.start()
 
         while True:
@@ -67,13 +68,13 @@ class Main:
 
             self.output_queues.append(deque())
             self.server_threads.append(
-                Server(self.users[i].node, self.tables[i], self.output_queues[i], self.lookup_count,
+                Server(self.users[i].node, self.tables[i], self.output_queues[i], self.k,
                        self.connections_count))
             self.server_threads[i].start()
 
             self.command_queues.append(deque())
             self.client_threads.append(
-                Client(self.users[i].node, self.tables[i], self.command_queues[i], self.lookup_count))
+                Client(self.users[i].node, self.tables[i], self.command_queues[i], self.k, self.alpha))
             self.client_threads[i].start()
 
     def _generate_public_nodes(self, n):
@@ -86,13 +87,13 @@ class Main:
 
             self.output_queues.append(deque())
             self.server_threads.append(
-                Server(self.users[i].node, self.tables[i], self.output_queues[i], self.lookup_count,
+                Server(self.users[i].node, self.tables[i], self.output_queues[i], self.k,
                        self.connections_count))
             self.server_threads[i].start()
 
             self.command_queues.append(deque())
             self.client_threads.append(
-                Client(self.users[i].node, self.tables[i], self.command_queues[i], self.lookup_count))
+                Client(self.users[i].node, self.tables[i], self.command_queues[i], self.k, self.alpha))
             self.client_threads[i].start()
 
 if __name__ == "__main__":
