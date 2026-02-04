@@ -33,25 +33,25 @@ class TestSending(TestCase):
     def tearDown(self):
         self._stop_threads()
 
-    # def test_group_chats(self):
-    #     public_user = self.users[self.private_nodes_count + 1]
-    #     for command_queue in self.command_queues[:self.private_nodes_count]:
-    #         command_queue.append(f"{public_user.node.id} SUBSCRIBE 0")
-    #
-    #     time.sleep(10)
-    #     self.command_queues[0].append(f"{public_user.node.id} STORE some_msg")
-    #     time.sleep(10)
-    #     for thread in self.server_threads[1:self.private_nodes_count]:
-    #         self.assertTrue(len(thread.messages) != 0)
-    #
-    # def test_ping_node(self):
-    #     self.assertTrue(Helper.ping_node(self.users[1].node))
-    #     unregistered_user = User(f"login{self.private_nodes_count+1}", "127.0.0.1", 5555 + self.private_nodes_count + 1)
-    #     self.assertFalse(Helper.ping_node(unregistered_user.node))
-    #
-    # def test_node_not_found(self):
-    #     self.command_queues[1].append(f"some_not_existing_id STORE some_msg")
-    #     self.assertRaises(NodeNotFoundException)
+    def test_group_chats(self):
+        public_user = self.users[self.private_nodes_count + 1]
+        for command_queue in self.command_queues[:self.private_nodes_count]:
+            command_queue.append(f"{public_user.node.id} SUBSCRIBE 0")
+
+        time.sleep(10)
+        self.command_queues[0].append(f"{public_user.node.id} STORE some_msg")
+        time.sleep(10)
+        for thread in self.server_threads[1:self.private_nodes_count]:
+            self.assertTrue(len(thread.messages) != 0)
+
+    def test_ping_node(self):
+        self.assertTrue(Helper.ping_node(self.users[1].node))
+        unregistered_user = User(f"login{self.private_nodes_count+1}", "127.0.0.1", 5555 + self.private_nodes_count + 1)
+        self.assertFalse(Helper.ping_node(unregistered_user.node))
+
+    def test_node_not_found(self):
+        self.command_queues[1].append(f"some_not_existing_id STORE some_msg")
+        self.assertRaises(NodeNotFoundException)
 
     def test_user2_to_user1(self):
         self.command_queues[1].append(f"{self.users[0].node.id} STORE somemsg")
@@ -59,30 +59,30 @@ class TestSending(TestCase):
         time.sleep(5)
         self.assertTrue(len(user1_messages) != 0)
 
-    # def test_2_messages_user2_to_user1(self):
-    #     self.command_queues[1].append(f"{self.users[0].node.id} STORE first_msg")
-    #     self.command_queues[1].append(f"{self.users[0].node.id} STORE second_msg")
-    #     user1_messages = self.server_threads[0].messages
-    #     time.sleep(5)
-    #     self.assertTrue(len(user1_messages) == 2)
+    def test_2_messages_user2_to_user1(self):
+        self.command_queues[1].append(f"{self.users[0].node.id} STORE first_msg")
+        self.command_queues[1].append(f"{self.users[0].node.id} STORE second_msg")
+        user1_messages = self.server_threads[0].messages
+        time.sleep(5)
+        self.assertTrue(len(user1_messages) == 2)
 
-    # def test_messages_from_one_to_many_users(self):
-    #     self.command_queues[1].append(f"{self.users[0].node.id} STORE first_msg")
-    #     self.command_queues[1].append(f"{self.users[2].node.id} STORE second_msg")
-    #     user0_messages = self.server_threads[0].messages
-    #     user2_messages = self.server_threads[2].messages
-    #     time.sleep(10)
-    #     self.assertTrue(len(user0_messages) != 0)
-    #     self.assertTrue(len(user2_messages) != 0)
+    def test_messages_from_one_to_many_users(self):
+        self.command_queues[1].append(f"{self.users[0].node.id} STORE first_msg")
+        self.command_queues[1].append(f"{self.users[2].node.id} STORE second_msg")
+        user0_messages = self.server_threads[0].messages
+        user2_messages = self.server_threads[2].messages
+        time.sleep(10)
+        self.assertTrue(len(user0_messages) != 0)
+        self.assertTrue(len(user2_messages) != 0)
     #
-    # def test_messages_many_to_many(self):
-    #     self.command_queues[1].append(f"{self.users[0].node.id} STORE first_msg")
-    #     self.command_queues[0].append(f"{self.users[2].node.id} STORE second_msg")
-    #     user0_messages = self.server_threads[0].messages
-    #     user2_messages = self.server_threads[2].messages
-    #     time.sleep(10)
-    #     self.assertTrue(len(user0_messages) != 0)
-    #     self.assertTrue(len(user2_messages) != 0)
+    def test_messages_many_to_many(self):
+        self.command_queues[1].append(f"{self.users[0].node.id} STORE first_msg")
+        self.command_queues[0].append(f"{self.users[2].node.id} STORE second_msg")
+        user0_messages = self.server_threads[0].messages
+        user2_messages = self.server_threads[2].messages
+        time.sleep(10)
+        self.assertTrue(len(user0_messages) != 0)
+        self.assertTrue(len(user2_messages) != 0)
 
     def _generate_private_nodes(self, n):
         default_port = 5555

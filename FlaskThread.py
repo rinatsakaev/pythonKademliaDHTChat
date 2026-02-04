@@ -20,7 +20,7 @@ class FlaskThread(threading.Thread):
 
     def run(self):
         EventEmitter(self.messages_queue, self.socketIO).start()
-        self.socketIO.run(self.app, debug=True, use_reloader=False, port=12345)
+        self.socketIO.run(self.app, debug=True, use_reloader=False, port=12345, allow_unsafe_werkzeug=True)
 
     def get_contacts_from_file(self, path):
         with open(path, mode="r") as f:
